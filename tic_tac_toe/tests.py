@@ -1,8 +1,16 @@
 import unittest
 import array_comparison as ac
 from gamestate import GameState
+from AI import get_possible_states
 import numpy as np
+from typing import List, Any
 
+
+_empty_array = [
+    ["-", "-", "-"],
+    ["-", "-", "-"],
+    ["-", "-", "-"]
+]
 
 class TestArrayComparison(unittest.TestCase):
     def test_generate_equal_arrays(self):
@@ -73,6 +81,9 @@ class TestArrayComparison(unittest.TestCase):
 
 class TestGameState(unittest.TestCase):
     def test_gamestate(self):
+        gs = GameState()
+        self.assertTrue(np.array_equal(gs.state, _empty_array))
+
         self.assertRaises(
             ValueError, lambda: GameState([]))
         self.assertRaises(
@@ -112,6 +123,66 @@ class TestGameState(unittest.TestCase):
         b, m = gs3.is_game_over()
         self.assertTrue(b)
         self.assertEqual(m, "X won!")
+
+
+class TestAI(unittest.TestCase):
+    def test_get_possible_states(self):
+        gs = GameState()
+        res = [x.state for x in get_possible_states(gs, only_unique=False)]
+
+        self.assertEqual(9, len(res))
+        self.assertTrue(array_in_array([
+            ["X", "-", "-"],
+            ["-", "-", "-"],
+            ["-", "-", "-"]
+        ], res))
+        self.assertTrue(array_in_array([
+            ["-", "-", "-"],
+            ["-", "X", "-"],
+            ["-", "-", "-"]
+        ], res))
+        self.assertTrue(array_in_array([
+            ["-", "-", "-"],
+            ["-", "-", "-"],
+            ["-", "-", "X"]
+        ], res))
+
+        res = [x.state for x in get_possible_states(gs, only_unique=True)]
+        self.assertEqual(3, len(res))
+        self.assertTrue(array_in_array([
+            ["X", "-", "-"],
+            ["-", "-", "-"],
+            ["-", "-", "-"]
+        ], res))
+        self.assertTrue(array_in_array([
+            ["-", "-", "-"],
+            ["-", "X", "-"],
+            ["-", "-", "-"]
+        ], res))
+        self.assertFalse(array_in_array([
+            ["-", "-", "-"],
+            ["-", "-", "-"],
+            ["-", "-", "X"]
+        ], res))
+
+
+def are_arrays_equal(array1: List[List], array2: List[List], 
+                     check_order: bool = True) -> bool:
+    if check_order:
+        return np.array_equal(array1, array2)
+
+    if len(array1) != len(array2):
+        return False
+
+    for a1 in array1:
+        if not array_in_array(a1, array2):
+            return False
+
+    return True
+
+def array_in_array(array: List[Any], arrays: List[List]) -> bool:
+    return next(
+        (True for x in arrays if np.array_equal(x, array)), False)
 
 
 if __name__ == "__main__":

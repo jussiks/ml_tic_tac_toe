@@ -5,30 +5,41 @@ from gamestate import GameState
 from local_db import DB
 import array_comparison as ac
 from abc import ABC, abstractmethod
+from typing import Iterable
 
 
-def get_possible_states(previous_gamestate):
-    """Yields all possible unique states that follow from given previous
-    gamestate."""
+def get_possible_states(previous_gamestate: GameState, 
+                        only_unique: bool = False) -> Iterable[GameState]:
+    """Yields all possible states that follow from given previous
+    gamestate.
+    
+    If only unique is set to True, only unique game states are
+    yielded."""
     next_to_move = previous_gamestate.next_to_move()
     indexes = np.nonzero(previous_gamestate.state == "-")
-
+    
     def move_generator():
         for i in range(len(indexes[0])):
             ndarr = np.copy(previous_gamestate.state)
             ndarr[indexes[0][i], indexes[1][i]] = next_to_move
-            yield ndarr
+            yield GameState(ndarr)
 
-    gamestates = []
-    for arr in move_generator():
-        for gs in gamestates:
-            if ac.are_sqr_arrays_equal(gs, arr):
-                continue
-        gamestates.append(arr)
-        yield GameState(arr)
+    if not only_unique:
+        for gs in move_generator():
+            yield gs
+
+    else:
+        gamestates = set()
+        for gs in move_generator():
+            if gs not in gamestates:
+                gamestates.add(gs)
+                yield gs
 
 
 class AI(ABC):
+    """Base abstract class for all AIs. They should implement a method for
+    deriving next gamestate from previous one as well as a method for updating
+    the AI that is called when a game is finished."""
     @abstractmethod
     def get_next_gamestate(self, previous_gamestate):
         pass
