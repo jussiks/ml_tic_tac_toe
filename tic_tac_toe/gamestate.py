@@ -12,9 +12,8 @@ _initial_gamestate = [
 ]
 
 
-class GameState(object):
-    def __init__(self, array=None):
-        array = array if array is not None else _initial_gamestate
+class GameState:
+    def __init__(self, array=_initial_gamestate):
         self.state = np.array(array)
         try:
             self.char_counts = self.count_chars()
